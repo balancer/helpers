@@ -10,6 +10,7 @@ interface IVault {
 
 interface BasePool {
     function getPoolId() external view returns (bytes32);
+    function getRateProviders() external view returns (address[] memory);
 }
 
 interface IERC20 {
@@ -48,7 +49,7 @@ contract BalancerViewHelpers {
             uint8 decimals = IERC20(tokens[i]).decimals();
             bytes32 nestedId = bytes32(0);
 
-            uint256 priceRate = 2;
+            uint256 priceRate = 1;
             try IRateProvider(tokens[i]).getRate() returns (uint256 rate) {
                 priceRate = rate;
             } catch {
