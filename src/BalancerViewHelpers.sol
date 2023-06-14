@@ -16,6 +16,10 @@ interface IERC20 {
     function decimals() external view returns (uint8);
 }
 
+interface IRateProvider {
+    function getRate() external view returns (uint256);
+}
+
 contract BalancerViewHelpers {
     struct PoolToken {
         bytes32 parentId;
@@ -23,6 +27,7 @@ contract BalancerViewHelpers {
         address token;
         uint256 balance;
         uint8 decimals;
+        uint256 priceRate;
     }
 
     IVault vault;
@@ -43,6 +48,13 @@ contract BalancerViewHelpers {
             uint8 decimals = IERC20(tokens[i]).decimals();
             bytes32 nestedId = bytes32(0);
 
+            uint256 priceRate = 2;
+            try IRateProvider(tokens[i]).getRate() returns (uint256 rate) {
+                priceRate = rate;
+            } catch {
+                // Safe to ignore, because we don't need to get priceRate for non-rate providers
+            }
+
             // If it's a pool token, get it's nested tokens
             try BasePool(tokens[i]).getPoolId() returns (bytes32 id) {
                 nestedId = id;
@@ -60,7 +72,7 @@ contract BalancerViewHelpers {
                 // Safe to ignore, becase we don't need to get nested tokens for non-pool tokens
             }
 
-            allTokens[j] = PoolToken(poolId, nestedId, tokens[i], balances[i], decimals);
+            allTokens[j] = PoolToken(poolId, nestedId, tokens[i], balances[i], decimals, priceRate);
             j++;
         }
 
